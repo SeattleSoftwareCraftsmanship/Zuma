@@ -1,0 +1,10 @@
+[Bb]in
+[Oo]bj
+*.suo
+*.user
+*ncrunch*
+*resharper*
+packages
+sentMail
+*.mdf
+*.ldf
