@@ -46,16 +46,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppInbox.cs" />
-    <Compile Include="Complex.cs" />
-    <Compile Include="Complex2.cs" />
-    <Compile Include="Complex3.cs" />
     <Compile Include="Country.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Logging.cs" />
-    <Compile Include="LowRisk.cs" />
     <Compile Include="MessageHelper.cs" />
     <Compile Include="MessageObject.cs" />
-    <Compile Include="Moderate.cs" />
     <Compile Include="User.cs" />
     <Compile Include="UserInfo.cs" />
     <Compile Include="Utils.cs" />

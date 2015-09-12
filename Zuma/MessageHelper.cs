@@ -5,7 +5,7 @@ using Twilio;
 
 /*************************************************************************
  * filename: MessageHelper.cs
- * namespace: Zuma
+ * namespace: ZumaLuma
  * created on: 4/1/2001
  * created by: t.howard
  * description: <include a detailed description of what this class does>
@@ -15,7 +15,7 @@ namespace Zuma
 {
     public class MessageHelper
     {
-        public void SendMessage(string user, string messageType, bool email)
+        public void SendMessage(string client, string messageType, bool email)
         {
             // if we want to send the message by email then 
             // we need to create a new client, provide our
@@ -23,9 +23,9 @@ namespace Zuma
             // type subjedt and body based on messageType provided,
             // then send the email, otherwise we send an SMS
 
-            var info = User.Fetch(user);
+            var info = User.Fetch(client);
 
-            // To send an email we the user needs to be in the US
+            // To send an email we the client needs to be in the US
             // and have an email address
             // and has to have been active since May 10, 2011
             if (email)
@@ -36,40 +36,51 @@ namespace Zuma
                     {
                         var addr = new MailAddress("no-reply@acme.com", "Acme MailRoom");
 
-                        var client = new SmtpClient("smtp.acme.net");
-                        client.Credentials = new NetworkCredential("no-reply@acme.com", "[Password]");
-                        var name = Utils.GetDisplayName(user);
+                        var mailClient = new SmtpClient("smtp.acme.net");
+                        mailClient.Credentials = new NetworkCredential("no-reply@acme.com", "[Password]");
+                        var name = Utils.GetDisplayName(client);
                         var trimmedName = name.Trim();
-                        var address = Utils.GetEmailAddress(user);
-                        var addr2 = new MailAddress(address, trimmedName);
+                            var address = Utils.GetEmailAddress(client);
+                            var addr2 = new MailAddress(address, trimmedName);
                         var msg = new MailMessage(addr, addr2);
                         msg.Subject = Utils.GetSub(messageType);
 
                         // Modified by a.krasowskis on 4/12/2001
                         msg.Body = Utils.GetMsg(messageType);
-                        client.Send(msg);
+                        mailClient.Send(msg);
 
                         // log that we sent the message
                         var logger = Logging.CreateLogger();
-                        logger.CreateNewOrOpenExistingLogAndWriteToLog(typeof (MessageLog), msg);
+                        logger.CreateNewOrOpenExistingLogAndWriteToLog(typeof(MessageLog), msg);
                         logger.Close();
                     }
                     else
                     {
-                        
+                        // legacy clients & clients outside of USA receive notifications
+                        // in their web inbox
+
+                        var msg = Utils.GetMsg(messageType);
+                            var sub = Utils.GetSub(messageType);
+                            var appInbox = new AppInbox(client);
+                        appInbox.Send(sub, msg);
+
+                            // log that we sent the message
+                            var logger = Logging.CreateLogger();
+                        logger.CreateNewOrOpenExistingLogAndWriteToLog(typeof(MessageLog), msg);
+                        logger.Close();
                     }
                 }
             }
-/*
-            else if (customMessenger)
-            {
-                var c = new customMessengerClient("4c16ca7e-a612-4aab-b22a-2aeb8723f702", "ALFKI", null);
-                var msg = Utils.GetMsg3(messageType);
-                var r = Utils.GetNum2(user);
-                c.Send(msg, r);
+            /*
+                        else if (customMessenger)
+                        {
+                            var c = new customMessengerClient("4c16ca7e-a612-4aab-b22a-2aeb8723f702", "ALFKI", null);
+                            var msg = Utils.GetMsg3(messageType);
+                            var r = Utils.GetNum2(client);
+                            c.Send(msg, r);
 
-            }
-*/
+                        }
+            */
             else
             {
                 // create a new TwilioRestClient instance
@@ -77,7 +88,7 @@ namespace Zuma
                 var c = new TwilioRestClient("AC47c7253af8c6fae4066c7fe3dbe4433c", "[AuthToken]");
 
                 // we need the users phone number
-                var n = Utils.GetNum(user);
+                var n = Utils.GetNum(client);
 
                 // we need the message type
                 var m = Utils.GetMsg2(messageType);
@@ -93,11 +104,20 @@ namespace Zuma
 
         }
 
-        private void cb(Object message)
+        public void cb(Object message)
         {
+            string text;
+            if (message is Message)
+            {
+                text = ((Message)message).Body;
+            }
+            else // is string
+            {
+                text = message as String;
+            }
             // log that we sent the message
             var logger = Logging.CreateLogger();
-            logger.CreateNewOrOpenExistingLogAndWriteToLog(typeof (MessageLog), message);
+            logger.CreateNewOrOpenExistingLogAndWriteToLog(typeof(MessageLog), message);
             logger.Close();
         }
     }
